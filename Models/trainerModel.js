@@ -14,8 +14,8 @@ const trainerModel = new Schema({
         required : true,
     },
 
-    town : {
-        type : String,
+    isProfessor: {
+        type : Boolean,
         required : true,
     },
 

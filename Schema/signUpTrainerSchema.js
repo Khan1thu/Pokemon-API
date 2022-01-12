@@ -12,9 +12,9 @@ const signUpTrainerSchema = [
     .isNumeric()
     .withMessage("Age must be number"),
     
-    body("town")
+    body("isProfessor")
     .exists({ checkFalsy: true })
-    .withMessage("Please Fill your town"),
+    .withMessage("Are you a Professor"),
     
     body("password")
     .exists({ checkFalsy: true })

@@ -3,14 +3,36 @@ const bcrypt = require('bcrypt');
 const generateToken = require("../middlewares/generateToken");
 const fs = require('fs');
 
-//get trainer profile
+//get all trainer profile
+const getAllTrainers = async (req, res) => {
+    try {
+      const trainers = await Trainer.find();
+  
+      res.send(trainers);
+    } catch (error) {
+      res.status(500);
+    }
+};
+  
+//get single Trainer
+const getSingleTrainer = async (req, res) => {
+    try {
+      const trainers = await Trainer.findById(req.params.id);
+  
+      res.send(trainers);
+    } catch (error) {
+      res.status(500);
+    }
+  };
+
+//get mine trainer profile
 const getTrainerProfile = async(req,res) => {
     try {
         res.send({
             id : req.trainer._id,
             name : req.trainer.name,
             age: req.trainer.age,
-            town: req.trainer.town,
+            isProfessor: req.trainer.isProfessor,
             photo : req.trainer.photo,
         });
     } catch (error) {
@@ -20,7 +42,7 @@ const getTrainerProfile = async(req,res) => {
 
 //createTrainer
 const signUpTrainer = async(req,res)=>{
-    const { name, age, town, password, confirmPassword, photo} = req.body;
+    const { name, age, isProfessor, password, confirmPassword, photo} = req.body;
     try {
 
         const hashPw = await bcrypt.hash(password, 8);
@@ -28,7 +50,7 @@ const signUpTrainer = async(req,res)=>{
         const trainer = new Trainer({
             name,
             age,
-            town,
+            isProfessor,
             password : hashPw,
             photo : req.file.path
         });
@@ -62,7 +84,7 @@ const logInTrainer = async(req,res) => {
                 res.send({
                     name : trainer.name,
                     age: trainer.age,
-                    town: trainer.town,
+                    isProfessor: trainer.isProfessor,
                     password : trainer.password,
                     photo : trainer.photo,
                     token,
@@ -75,6 +97,21 @@ const logInTrainer = async(req,res) => {
         res.send(error);
     }
 }
+
+//Trainer logout
+const traierLogOut = async (req, res) => {
+    try {
+      req.trainer.tokens = req.trainer.tokens.filter((token) => {
+        return token.token != req.token;
+      });
+  
+      await req.trainer.save();
+  
+      res.sendStatus(200);
+    } catch (error) {
+      res.send(500);
+    }
+  };
 
 //editTrainer
 const editTrainer = async(req,res) => {
@@ -103,6 +140,35 @@ const editTrainer = async(req,res) => {
     }
 }
 
+const changePassword = async(req, res) => {
+    try{
+        const trainer = await Trainer.findById(req.trainer._id);
+    
+        const samePw = await bcrypt.compare(String(req.body.prevPw), trainer.password);
+    
+        if(!samePw){
+          res.status(400).send("Your Previous Password is wrong");
+          return;
+        }
+    
+        const hashPw = await bcrypt.hash(req.body.newPw,8);
+    
+        const updateData = {
+          name: trainer.name,
+          age: trainer.age,
+          isProfessor: trainer.isProfessor,
+          photo: trainer.photo,
+          tokens: trainer.tokens,
+          password: hashPw,
+        };
+    
+        const updatetrainer = await Trainer.findByIdAndUpdate(req.trainer._id,updateData,{new:true,});
+        console.log(updatetrainer);
+      }catch(error){
+        console.log(error);
+      }
+}
+
 //quit Trainer
 const quitTrainer = async(req,res) => {
     try {
@@ -117,4 +183,13 @@ const quitTrainer = async(req,res) => {
       }
 }
 
-module.exports = {signUpTrainer, logInTrainer, getTrainerProfile, editTrainer,  quitTrainer};
+module.exports = { getAllTrainers, 
+    getSingleTrainer,
+    signUpTrainer, 
+    logInTrainer, 
+    traierLogOut,
+    getTrainerProfile, 
+    editTrainer, 
+    changePassword, 
+    quitTrainer
+};

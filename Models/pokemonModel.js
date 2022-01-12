@@ -18,6 +18,11 @@ const pokemonModel = new Schema({
         type: String,
         required : true,
     },
+
+    public : {
+        type : Boolean,
+        required : true,
+    },
     
     photo : {
         type : String,
